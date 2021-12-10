@@ -204,32 +204,64 @@ void print(Student* db, int& count_students)
 {
     if (count_students == 0)
     {
-        cout << "Студентов еще нет в базе данных\n\n";
+        cout << "Студентов еще в базе данных\n\n";
         return;
     }
-    const int SIZE_CELL = 5;
-    cout << '+';
-    for (int i = 0; i < SIZE_CELL * 8 + MAX_LEN_NAME + 8; i++) cout << '-';
-    cout << "+\n";
+    const int COUNT_FIELDS = 9;
+    const char* titles[COUNT_FIELDS]{ "№", "Имя", "Курс", "Год поступления", "Мат. анализ", "Анал. геом.", "Инж. граф.", "Высок. прогр.", "Теор. инф." };
+    int size_field[COUNT_FIELDS]{};
+    for (int i = 0; i < COUNT_FIELDS; i++) size_field[i] = strlen(titles[i]);
+    int count_digits = 0;
+    int n = count_students;
+    while (n > 0)
+    {
+        n /= 10;
+        count_digits++;
+    }
+    size_field[0] = (size_field[0] > count_digits ? size_field[0] : count_digits);
+
     for (int i = 0; i < count_students; i++)
-	{
-		cout << '|' << setw(SIZE_CELL) << i << '|';
-		cout << setw(MAX_LEN_NAME) << db[i].name;
-		cout << '|' << setw(SIZE_CELL) << db[i].course << '|' << setw(SIZE_CELL) << db[i].admission_year << '|';
-		for (int j = 0; j < COUNT_SUBJECTS; j++) cout << setw(SIZE_CELL) << db[i].marks[j] << '|';
-        bool last_student = (i + 1 == count_students);
-		cout << (last_student ? "\n+" : "\n|");
-		for (int j = 0; j < SIZE_CELL; j++) cout << '-';
-		cout << (last_student ? '-' : '+');
-		for (int j = 0; j < MAX_LEN_NAME; j++) cout << '-';
-		for (int j = 0; j < 2 + COUNT_SUBJECTS; j++)
-		{
-			cout << (last_student ? '-' : '+');
-			for (int k = 0; k < SIZE_CELL; k++) cout << '-';
-		}
-		cout << (last_student ? "+\n" : "|\n");
-	}
-    cout << '\n';
+    {
+        size_field[1] = (strlen(db[i].name) > size_field[1] ? strlen(db[i].name) : size_field[1]);
+        size_field[2] = (strlen(db[i].course) > size_field[2] ? strlen(db[i].course) : size_field[2]);
+        size_field[3] = (strlen(db[i].admission_year) > size_field[3] ? strlen(db[i].admission_year) : size_field[3]);
+    }
+    int width = COUNT_FIELDS - 1;
+    for (int i = 0; i < COUNT_FIELDS; i++) width += size_field[i];
+    cout << "+";
+    for (int i = 0; i < width; i++) cout << "-";
+    cout << "+\n";
+    for (int i = 0; i < COUNT_FIELDS; i++) cout << "|" << setw(size_field[i]) << titles[i];
+    cout << "|\n";
+
+    for (int i = 0; i < count_students; i++)
+    {
+        cout << "|";
+        int index_field = 0;
+        int curr_index = 0;
+        for (int i = 0; i < width; i++)
+        {
+            curr_index++;
+            if (curr_index == size_field[index_field] + 1)
+            {
+                cout << "+";
+                index_field++;
+                curr_index = 0;
+            }
+            else cout << "-";
+        }
+        cout << "|\n";
+
+        cout << "|";
+        cout << setw(size_field[0]) << i << "|" << setw(size_field[1]) << db[i].name << "|" << setw(size_field[2]) << db[i].course << "|"
+            << setw(size_field[3]) << db[i].admission_year << "|";
+        for (int j = 0; j < COUNT_SUBJECTS; j++) cout << setw(size_field[j + 4]) << db[i].marks[j] << "|";
+        cout << "\n";
+    }
+
+    cout << "+";
+    for (int i = 0; i < width; i++) cout << "-";
+    cout << "+\n\n";
 }
 
 void request(Student* db, int& count_students)
