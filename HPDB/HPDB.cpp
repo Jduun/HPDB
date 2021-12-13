@@ -1,9 +1,9 @@
 ﻿#include <iostream>
 #include <cstring>
 #include <iomanip>
+#include <windows.h>
 #include <fstream>
 
-#define ERROR_INPUT cout << "Неверный ввод!\n"
 #define MAX_COUNT_STUDENTS 100
 #define COUNT_SUBJECTS 5
 #define MAX_LEN_NAME 50
@@ -16,7 +16,7 @@ struct Student
     char name[MAX_LEN_NAME] = "No name";
     char course[2] = "1";
     char admission_year[5] = "2021";
-    int marks[COUNT_SUBJECTS]{2, 2, 2, 2, 2};
+    int marks[COUNT_SUBJECTS]{ 2, 2, 2, 2, 2 };
 };
 
 enum MainCommands
@@ -24,7 +24,7 @@ enum MainCommands
     PRINT,
     ADD,
     CHANGE,
-    DELETE,
+    DEL,
     SORT,
     REQUEST,
     LOAD_IN_TEXT_FILE,
@@ -51,9 +51,8 @@ enum SortCommands
 };
 
 void menu();
+void print(Student* db, int& count_students, bool request = false);
 void add(Student*, int&);
-void print(Student*, int&);
-void request(Student*, int&);
 void del(Student*, int&);
 void change(Student*, int&);
 void sort(Student*, int&);
@@ -69,11 +68,15 @@ bool compare(char*, char*);
 bool is_letter(char);
 bool is_num(char);
 void swap(Student*, Student*);
-int max(int, int);
-void get_words(char* text, const char** words, int& count);
+int maxn(int, int);
+void get_words(char*, const char**, int&);
+void set_color(int color = 7);
+void error();
 
 int main()
 {
+    SetConsoleCP(1251);
+    SetConsoleOutputCP(1251);
     setlocale(LC_ALL, "Ru");
     Student db[MAX_COUNT_STUDENTS];
     int count_students = 0;
@@ -96,6 +99,7 @@ int main()
             }
             else
             {
+                correct = (strlen(input) != 0);
                 for (int i = 0; i < strlen(input); i++)
                 {
                     if (!is_num(input[i]))
@@ -120,14 +124,14 @@ int main()
                 case CHANGE:
                     change(db, count_students);
                     break;
-                case DELETE:
+                case DEL:
                     del(db, count_students);
                     break;
                 case SORT:
                     sort(db, count_students);
                     break;
                 case REQUEST:
-                    request(db, count_students);
+                    print(db, count_students, true);
                     break;
                 case LOAD_IN_TEXT_FILE:
                     load_in_file(db, count_students, "data_base.txt");
@@ -146,7 +150,7 @@ int main()
                     break;
                 default:
                     menu();
-                    ERROR_INPUT;
+                    error();
                     correct = false;
                     break;
                 }
@@ -155,7 +159,7 @@ int main()
             {
                 system("cls");
                 menu();
-                ERROR_INPUT;
+                error();
             }
         }
     }
@@ -165,67 +169,97 @@ int main()
 void menu()
 {
     cout << PRINT << ". Вывести базу данных\n"
-         << ADD << ". Добавление записи\n"
-         << CHANGE << ". Изменение записи\n"
-         << DELETE << ". Удаление записи\n"
-         << SORT << ". Сортировка базы данных\n"
-         << REQUEST << ". Запрос\n"
-         << LOAD_IN_TEXT_FILE << ". Загрузка базы данных в текстовый файл\n"
-         << UNLOAD_FROM_TEXT_FILE << ". Выгрузка базы данных из текстового файла\n"
-         << LOAD_IN_BIN_FILE << ". Загрузка базы данных в бинарный файл\n"
-         << UNLOAD_FROM_BIN_FILE << ". Выгрузка из бинарного файла\n"
-         << EXIT << ". Выход\n";
+        << ADD << ". Добавление записи\n"
+        << CHANGE << ". Изменение записи\n"
+        << DEL << ". Удаление записи\n"
+        << SORT << ". Сортировка базы данных\n"
+        << REQUEST << ". Запрос\n"
+        << LOAD_IN_TEXT_FILE << ". Загрузка базы данных в текстовый файл\n"
+        << UNLOAD_FROM_TEXT_FILE << ". Выгрузка базы данных из текстового файла\n"
+        << LOAD_IN_BIN_FILE << ". Загрузка базы данных в бинарный файл\n"
+        << UNLOAD_FROM_BIN_FILE << ". Выгрузка из бинарного файла\n"
+        << EXIT << ". Выход\n";
 }
 
 void add(Student* db, int& count_students)
 {
     if (count_students == MAX_COUNT_STUDENTS)
     {
-        cout << "Больше нельзя добавить студентов\n\n";
+        cout << "Больше нельзя добавить студентов в базу данных\n\n";
         return;
     }
-	bool correct = false;
-	char input[2] = "";
-	while (!correct)
-	{
-		correct = true;
-		cout << "Добавить студента по умолчанию?(Да - 1, нет - 0)\n";
-		cin.getline(input, 2);
-		if (cin.fail())
-		{
-			cin.clear();
-			cin.ignore(IGNORE, '\n');
-			correct = false;
-		}
-		else correct = (input[0] == '0' || input[0] == '1');
+    bool correct = false;
+    char input[2] = "";
+    while (!correct)
+    {
+        correct = true;
+        cout << "Добавить студента по умолчанию?\n0. Нет\n1. Да\nВведите команду: ";
+        cin.getline(input, 2);
+        if (cin.fail())
+        {
+            cin.clear();
+            cin.ignore(IGNORE, '\n');
+            correct = false;
+        }
+        else correct = (input[0] == '0' || input[0] == '1');
 
-		if (correct)
-		{
-			if (input[0] == '0')
-			{
-				cout << "Введите информацию о новом студенте:\n";
-				input_name(&db[count_students]);
-				input_course(&db[count_students]);
-				input_admission_year(&db[count_students]);
-				input_marks(&db[count_students]);
-			}
-		}
-		else ERROR_INPUT;
-	}
+        if (correct)
+        {
+            if (input[0] == '0')
+            {
+                cout << "Введите информацию о новом студенте:\n";
+                input_name(&db[count_students]);
+                input_course(&db[count_students]);
+                input_admission_year(&db[count_students]);
+                input_marks(&db[count_students]);
+            }
+            else
+            {
+                Student st{};
+                db[count_students] = st;
+            }
+        }
+        else error();
+    }
     count_students++;
     system("cls");
     print(db, count_students);
 }
 
-void print(Student* db, int& count_students)
+void print(Student* db, int& count_students, bool request)
 {
     if (count_students == 0)
     {
         cout << "Студентов еще нет в базе данных\n\n";
         return;
     }
+    const int bad_mark = 2;
+    
+    if (request)
+    {
+        bool exist_bads = false;
+        cout << "Студенты, у которых не менее трех оценок 2:\n";
+        for (int i = 0; i < count_students; i++)
+        {
+            int count_bad_mark = 0;
+            for (int j = 0; j < COUNT_SUBJECTS; j++)
+            {
+                if (db[i].marks[j] == bad_mark) count_bad_mark++;
+            }
+            if (count_bad_mark >= 3)
+            {
+                exist_bads = true;
+                break;
+            }
+        }
+        if (!exist_bads)
+        {
+            cout << "Нет таких студентов\n\n";
+            return;
+        }
+    }
     const int COUNT_FIELDS = 9;
-    const char* titles[COUNT_FIELDS]{ "№", "Имя", "Курс", "Год поступления", "Мат. анализ", "Анал. геом.", "Инж. граф.", "Высок. прогр.", "Теор. инф." };
+    const char* titles[COUNT_FIELDS]{ "№", "Имя", "Курс", "Год поступления", "Мат. анализ[1]", "Анал. геом.[2]", "Инж. граф.[3]", "Высок. прогр.[4]", "Теор. инф.[5]" };
     int size_field[COUNT_FIELDS]{};
     for (int i = 0; i < COUNT_FIELDS; i++) size_field[i] = strlen(titles[i]);
     int count_digits = 0;
@@ -235,64 +269,29 @@ void print(Student* db, int& count_students)
         n /= 10;
         count_digits++;
     }
-    size_field[0] = max(size_field[0], count_digits);
+    size_field[0] = maxn(size_field[0], count_digits);
 
     for (int i = 0; i < count_students; i++)
     {
-        size_field[1] = max(size_field[1], strlen(db[i].name));
-        size_field[2] = max(size_field[2], strlen(db[i].course));
-        size_field[3] = max(size_field[3], strlen(db[i].admission_year));
-        for (int j = 0; j < COUNT_SUBJECTS; j++) size_field[j + 4] = max(size_field[j + 4], 1);
+        size_field[1] = maxn(size_field[1], strlen(db[i].name));
+        size_field[2] = maxn(size_field[2], strlen(db[i].course));
+        size_field[3] = maxn(size_field[3], strlen(db[i].admission_year));
+        for (int j = 0; j < COUNT_SUBJECTS; j++) size_field[j + 4] = maxn(size_field[j + 4], 1);
     }
     int width = COUNT_FIELDS - 1;
     for (int i = 0; i < COUNT_FIELDS; i++) width += size_field[i];
     cout << "+";
     for (int i = 0; i < width; i++) cout << "-";
     cout << "+\n";
-    for (int i = 0; i < COUNT_FIELDS; i++) cout << "|" << setw(size_field[i]) << titles[i];
+    for (int i = 0; i < COUNT_FIELDS; i++)
+    {
+        cout << "|" << setw(size_field[i]);
+        set_color(10);
+        cout << titles[i];
+        set_color();
+    }
     cout << "|\n";
-
-    for (int i = 0; i < count_students; i++)
-    {
-        cout << "|";
-        int index_field = 0;
-        int curr_index = 0;
-        for (int i = 0; i < width; i++)
-        {
-            curr_index++;
-            if (curr_index == size_field[index_field] + 1)
-            {
-                cout << "+";
-                index_field++;
-                curr_index = 0;
-            }
-            else cout << "-";
-        }
-        cout << "|\n";
-
-        cout << "|";
-        cout << setw(size_field[0]) << i << "|" << setw(size_field[1]) << db[i].name << "|" << setw(size_field[2]) << db[i].course << "|"
-            << setw(size_field[3]) << db[i].admission_year << "|";
-        for (int j = 0; j < COUNT_SUBJECTS; j++) cout << setw(size_field[j + 4]) << db[i].marks[j] << "|";
-        cout << "\n";
-    }
-
-    cout << "+";
-    for (int i = 0; i < width; i++) cout << "-";
-    cout << "+\n\n";
-}
-
-void request(Student* db, int& count_students)
-{
-    if (count_students == 0)
-    {
-        cout << "Студентов еще нет в базе данных\n\n";
-        return;
-    }
-
-    const int bad_mark = 2;
-    bool exist_bads = false;
-    cout << "Студенты, у которых не менее трех оценок 2:\n";
+    
     for (int i = 0; i < count_students; i++)
     {
         int count_bad_mark = 0;
@@ -300,57 +299,13 @@ void request(Student* db, int& count_students)
         {
             if (db[i].marks[j] == bad_mark) count_bad_mark++;
         }
-        if (count_bad_mark >= 3)
+        bool write = true;
+        if (request)
         {
-            exist_bads = true;
-            break;
+            if (count_bad_mark >= 3) write = true;
+            else write = false;
         }
-    }
-    if (!exist_bads)
-    {
-        cout << "Нет таких студентов\n\n";
-        return;
-    }
-
-    const int COUNT_FIELDS = 9;
-    const char* titles[COUNT_FIELDS]{ "№", "Имя", "Курс", "Год поступления", "Мат. анализ", "Анал. геом.", "Инж. граф.", "Высок. прогр.", "Теор. инф." };
-    int size_field[COUNT_FIELDS]{};
-    for (int i = 0; i < COUNT_FIELDS; i++) size_field[i] = strlen(titles[i]);
-    int count_digits = 0;
-    int n = count_students;
-    while (n > 0)
-    {
-        n /= 10;
-        count_digits++;
-    }
-    size_field[0] = max(size_field[0], count_digits);
-
-    for (int i = 0; i < count_students; i++)
-    {
-        size_field[1] = max(size_field[1], strlen(db[i].name));
-        size_field[2] = max(size_field[2], strlen(db[i].course));
-        size_field[3] = max(size_field[3], strlen(db[i].admission_year));
-        for (int j = 0; j < COUNT_SUBJECTS; j++) size_field[j + 4] = max(size_field[j + 4], 1);
-    }
-    int width = COUNT_FIELDS - 1;
-    for (int i = 0; i < COUNT_FIELDS; i++) width += size_field[i];
-    cout << "+";
-    for (int i = 0; i < width; i++) cout << "-";
-    cout << "+\n";
-    for (int i = 0; i < COUNT_FIELDS; i++) cout << "|" << setw(size_field[i]) << titles[i];
-    cout << "|\n";
-
-    for (int i = 0; i < count_students; i++)
-    {
-        int count_bad_mark = 0;
-        for (int j = 0; j < COUNT_SUBJECTS; j++)
-        {
-            if (db[i].marks[j] == bad_mark)
-            {
-                count_bad_mark++;
-            }
-        }
-        if (count_bad_mark >= 3)
+        if (write)
         {
             cout << "|";
             int index_field = 0;
@@ -369,12 +324,17 @@ void request(Student* db, int& count_students)
             cout << "|\n";
 
             cout << "|";
-            cout << setw(size_field[0]) << i << "|" << setw(size_field[1]) << db[i].name << "|" << setw(size_field[2]) << db[i].course << "|"
+            cout << setw(size_field[0]);
+            set_color(9);
+            cout << i;
+            set_color();
+            cout << "|" << setw(size_field[1]) << db[i].name << "|" << setw(size_field[2]) << db[i].course << "|"
                 << setw(size_field[3]) << db[i].admission_year << "|";
             for (int j = 0; j < COUNT_SUBJECTS; j++) cout << setw(size_field[j + 4]) << db[i].marks[j] << "|";
             cout << "\n";
         }
     }
+
     cout << "+";
     for (int i = 0; i < width; i++) cout << "-";
     cout << "+\n\n";
@@ -394,7 +354,7 @@ void del(Student* db, int& count_students)
     {
         correct = true;
         char input[4] = "";
-        cout << "Введите номер записи, которую нужно удалить:\n";
+        cout << "Введите номер записи, которую нужно удалить: ";
         cin.getline(input, 4);
         if (cin.fail())
         {
@@ -415,7 +375,7 @@ void del(Student* db, int& count_students)
             }
         }
         if (correct) n = atoi(input);
-        else ERROR_INPUT;
+        else error();
     }
     for (int i = n + 1; i < count_students; i++) db[i - 1] = db[i];
     count_students--;
@@ -437,7 +397,7 @@ void change(Student* db, int& count_students)
     {
         correct = true;
         char input[4] = "";
-        cout << "Введите номер записи, которую вы хотите изменить:\n";
+        cout << "Введите номер записи, которую вы хотите изменить: ";
         cin.getline(input, 4);
         if (cin.fail())
         {
@@ -458,7 +418,7 @@ void change(Student* db, int& count_students)
             }
         }
         if (correct) note = atoi(input);
-        else ERROR_INPUT;
+        else error();
     }
     int command;
     correct = false;
@@ -480,7 +440,7 @@ void change(Student* db, int& count_students)
         else
         {
             correct = (atoi(input) == CHANGE_NAME || atoi(input) == CHANGE_COURSE ||
-                       atoi(input) == CHANGE_ADMISSION_YEAR || atoi(input) == CHANGE_MARKS);
+                       atoi(input) == CHANGE_ADMISSION_YEAR || atoi(input) == CHANGE_MARKS) && strlen(input) != 0;
             for (int i = 0; i < strlen(input); i++)
             {
                 if (!is_num(input[i]))
@@ -491,7 +451,7 @@ void change(Student* db, int& count_students)
             }
         }
         if (correct) command = atoi(input);
-        else ERROR_INPUT;
+        else error();
     }
     switch (command)
     {
@@ -508,7 +468,7 @@ void change(Student* db, int& count_students)
         input_marks(&db[note]);
         break;
     default:
-        ERROR_INPUT;
+        error();
         break;
     }
     system("cls");
@@ -523,10 +483,10 @@ void sort(Student* db, int& count_students)
     {
         correct = true;
         cout << SORT_NAME << ". Имя\n"
-             << SORT_COURSE << ". Курс\n"
-             << SORT_ADMISSION_YEAR << ". Год поступления\n"
-             << SORT_MARKS << ". Средний балл\n"
-             << "Введите по какому из полей вы хотите отсортировать базу данных: ";
+            << SORT_COURSE << ". Курс\n"
+            << SORT_ADMISSION_YEAR << ". Год поступления\n"
+            << SORT_MARKS << ". Средний балл\n"
+            << "Введите по какому из полей вы хотите отсортировать базу данных: ";
         char input[2] = "";
         cin.getline(input, 2);
         if (cin.fail())
@@ -538,7 +498,7 @@ void sort(Student* db, int& count_students)
         else
         {
             correct = (atoi(input) == SORT_NAME || atoi(input) == SORT_COURSE ||
-                       atoi(input) == SORT_MARKS || atoi(input) == SORT_ADMISSION_YEAR);
+                atoi(input) == SORT_MARKS || atoi(input) == SORT_ADMISSION_YEAR) && (strlen(input) != 0);
             for (int i = 0; i < strlen(input); i++)
             {
                 if (!is_num(input[i]))
@@ -550,9 +510,9 @@ void sort(Student* db, int& count_students)
         }
 
         if (correct) command = atoi(input);
-        else ERROR_INPUT;
+        else error();
     }
-    
+
     for (int i = 0; i < count_students - 1; i++)
     {
         for (int j = 0; j < count_students - i - 1; j++)
@@ -594,7 +554,7 @@ void input_name(Student* s)
         correct = true;
         char input[MAX_LEN_NAME] = "";
         cout << "Введите имя: ";
-		cin.getline(input, MAX_LEN_NAME);
+        cin.getline(input, MAX_LEN_NAME);
 
         if (cin.fail())
         {
@@ -615,7 +575,7 @@ void input_name(Student* s)
         }
 
         if (correct) strcpy_s(s->name, input);
-        else ERROR_INPUT;
+        else error();
     }
 }
 
@@ -637,7 +597,7 @@ void input_course(Student* s)
         else correct = (input[0] >= '1' && input[0] <= '6');
 
         if (correct) strcpy_s(s->course, input);
-        else ERROR_INPUT;
+        else error();
     }
 }
 
@@ -659,7 +619,7 @@ void input_admission_year(Student* s)
         else correct = (atoi(input) >= 1980 && atoi(input) <= 2021);
 
         if (correct) strcpy_s(s->admission_year, input);
-        else ERROR_INPUT;
+        else error();
     }
 }
 
@@ -682,13 +642,8 @@ void input_marks(Student* s)
             }
             else correct = (atoi(input) >= 2 && atoi(input) <= 5);
 
-            if (correct)
-            {
-                s->marks[j] = atoi(input);
-                //strcpy_s(s->marks[j], input);
-                //for (int i = 0; i < strlen(input); i++) s->marks[j][i] = input[i];
-            }
-            else ERROR_INPUT;
+            if (correct) s->marks[j] = atoi(input);
+            else error();
         }
     }
 }
@@ -709,10 +664,14 @@ void load_in_file(Student* db, int& count_students, const char* file_name)
     }
     else
     {
+        set_color(12);
         cout << "Произошла ошибка!\n\n";
+        set_color();
         return;
     }
+    set_color(10);
     cout << "Запись произошла успешно!\n\n";
+    set_color();
 }
 
 void unload_from_file(Student* db, int& count_students, const char* file_name)
@@ -737,10 +696,14 @@ void unload_from_file(Student* db, int& count_students, const char* file_name)
     }
     else
     {
+        set_color(12);
         cout << "Произошла ошибка!\n\n";
+        set_color();
         return;
     }
+    set_color(10);
     cout << "Выгрузка произошла успешно\n\n";
+    set_color();
     print(db, count_students);
 }
 
@@ -791,7 +754,20 @@ void get_words(char* text, const char** words, int& count)
     }
 }
 
-int max(int x, int y)
+int maxn(int x, int y)
 {
     return (x > y ? x : y);
+}
+
+void set_color(int color)
+{
+    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleTextAttribute(handle, color);
+}
+
+void error()
+{
+    set_color(12);
+    cout << "Неверный ввод!\n";
+    set_color();
 }
