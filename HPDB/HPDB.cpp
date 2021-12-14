@@ -6,14 +6,14 @@
 
 #define MAX_COUNT_STUDENTS 100
 #define COUNT_SUBJECTS 5
-#define MAX_LEN_NAME 50
+#define MAX_LEN 50
 #define IGNORE 32767
 
 using namespace std;
 
 struct Student
 {
-    char name[MAX_LEN_NAME] = "No name";
+    char name[MAX_LEN] = "No name";
     char course[2] = "1";
     char admission_year[5] = "2021";
     int marks[COUNT_SUBJECTS]{ 2, 2, 2, 2, 2 };
@@ -50,6 +50,12 @@ enum SortCommands
     SORT_MARKS
 };
 
+enum AddCommands
+{
+    ADD_STUDENT,
+    ADD_DEFAULT_STUDENT
+};
+
 void menu();
 void print(Student* db, int& count_students, bool request = false);
 void add(Student*, int&);
@@ -66,7 +72,8 @@ void input_marks(Student*);
 
 bool compare(char*, char*);
 bool is_letter(char);
-bool is_num(char);
+bool is_digit(char);
+bool is_num(const char*);
 void swap(Student*, Student*);
 int maxn(int, int);
 void get_words(char*, const char**, int&);
@@ -87,28 +94,17 @@ int main()
         bool correct = false;
         while (!correct)
         {
-            char input[3] = "";
+            char input[MAX_LEN] = "";
             correct = true;
             cout << "Введите команду: ";
-            cin.getline(input, 3);
+            cin.getline(input, MAX_LEN);
             if (cin.fail())
             {
                 cin.clear();
                 cin.ignore(IGNORE, '\n');
                 correct = false;
             }
-            else
-            {
-                correct = (strlen(input) != 0);
-                for (int i = 0; i < strlen(input); i++)
-                {
-                    if (!is_num(input[i]))
-                    {
-                        correct = false;
-                        break;
-                    }
-                }
-            }
+            else correct = (atoi(input) >= PRINT && atoi(input) <= EXIT && is_num(input));
 
             if (correct)
             {
@@ -168,17 +164,20 @@ int main()
 
 void menu()
 {
+    set_color(10);
+    cout << "Меню\n";
+    set_color();
     cout << PRINT << ". Вывести базу данных\n"
-        << ADD << ". Добавление записи\n"
-        << CHANGE << ". Изменение записи\n"
-        << DEL << ". Удаление записи\n"
-        << SORT << ". Сортировка базы данных\n"
-        << REQUEST << ". Запрос\n"
-        << LOAD_IN_TEXT_FILE << ". Загрузка базы данных в текстовый файл\n"
-        << UNLOAD_FROM_TEXT_FILE << ". Выгрузка базы данных из текстового файла\n"
-        << LOAD_IN_BIN_FILE << ". Загрузка базы данных в бинарный файл\n"
-        << UNLOAD_FROM_BIN_FILE << ". Выгрузка из бинарного файла\n"
-        << EXIT << ". Выход\n";
+         << ADD << ". Добавление записи\n"
+         << CHANGE << ". Изменение записи\n"
+         << DEL << ". Удаление записи\n"
+         << SORT << ". Сортировка базы данных\n"
+         << REQUEST << ". Запрос\n"
+         << LOAD_IN_TEXT_FILE << ". Загрузка базы данных в текстовый файл\n"
+         << UNLOAD_FROM_TEXT_FILE << ". Выгрузка базы данных из текстового файла\n"
+         << LOAD_IN_BIN_FILE << ". Загрузка базы данных в бинарный файл\n"
+         << UNLOAD_FROM_BIN_FILE << ". Выгрузка из бинарного файла\n"
+         << EXIT << ". Выход\n";
 }
 
 void add(Student* db, int& count_students)
@@ -189,34 +188,42 @@ void add(Student* db, int& count_students)
         return;
     }
     bool correct = false;
-    char input[2] = "";
+    char input[MAX_LEN] = "";
     while (!correct)
     {
         correct = true;
-        cout << "Добавить студента по умолчанию?\n0. Нет\n1. Да\nВведите команду: ";
-        cin.getline(input, 2);
+        cout << ADD_STUDENT << ". Добавить студента\n"
+             << ADD_DEFAULT_STUDENT << ". Добавить студента по умолчанию\n"
+             << ADD_DEFAULT_STUDENT + 1 << ". Выход в меню\n"
+             << "Введите команду: ";
+        cin.getline(input, MAX_LEN);
         if (cin.fail())
         {
             cin.clear();
             cin.ignore(IGNORE, '\n');
             correct = false;
         }
-        else correct = (input[0] == '0' || input[0] == '1');
+        else correct = (atoi(input) >= ADD_STUDENT && atoi(input) <= ADD_DEFAULT_STUDENT + 1 && is_num(input));
 
         if (correct)
         {
-            if (input[0] == '0')
+            Student st{};
+            switch (atoi(input))
             {
+            case ADD_STUDENT:
                 cout << "Введите информацию о новом студенте:\n";
                 input_name(&db[count_students]);
                 input_course(&db[count_students]);
                 input_admission_year(&db[count_students]);
                 input_marks(&db[count_students]);
-            }
-            else
-            {
-                Student st{};
+                break;
+            case ADD_DEFAULT_STUDENT:
                 db[count_students] = st;
+                break;
+            case ADD_DEFAULT_STUDENT + 1:
+                system("cls");
+                return;
+                break;
             }
         }
         else error();
@@ -294,11 +301,11 @@ void print(Student* db, int& count_students, bool request)
     
     for (int i = 0; i < count_students; i++)
     {
-        int count_bad_mark = 0;
-        for (int j = 0; j < COUNT_SUBJECTS; j++)
-        {
-            if (db[i].marks[j] == bad_mark) count_bad_mark++;
-        }
+		int count_bad_mark = 0;
+		for (int j = 0; j < COUNT_SUBJECTS; j++)
+		{
+			if (db[i].marks[j] == bad_mark) count_bad_mark++;
+		}
         bool write = true;
         if (request)
         {
@@ -349,35 +356,29 @@ void del(Student* db, int& count_students)
         return;
     }
     bool correct = false;
-    int n = 0;
+    int note = 0;
     while (!correct)
     {
         correct = true;
-        char input[4] = "";
-        cout << "Введите номер записи, которую нужно удалить: ";
-        cin.getline(input, 4);
+        char input[MAX_LEN] = "";
+        cout << "Введите номер записи, которую нужно удалить(" << count_students << ", если вы хотите выйти в меню): ";
+        cin.getline(input, MAX_LEN);
         if (cin.fail())
         {
             cin.clear();
             cin.ignore(IGNORE, '\n');
             correct = false;
         }
-        else
-        {
-            correct = ((atoi(input) >= 0) && (atoi(input) < count_students) && strlen(input) != 0);
-            for (int i = 0; i < strlen(input); i++)
-            {
-                if (!is_num(input[i]))
-                {
-                    correct = false;
-                    break;
-                }
-            }
-        }
-        if (correct) n = atoi(input);
+        else correct = (atoi(input) >= 0 && atoi(input) <= count_students && is_num(input));
+        if (correct) note = atoi(input);
         else error();
     }
-    for (int i = n + 1; i < count_students; i++) db[i - 1] = db[i];
+    if (note == count_students)
+    {
+        system("cls");
+        return;
+    }
+    for (int i = note + 1; i < count_students; i++) db[i - 1] = db[i];
     count_students--;
     system("cls");
     print(db, count_students);
@@ -396,80 +397,64 @@ void change(Student* db, int& count_students)
     while (!correct)
     {
         correct = true;
-        char input[4] = "";
-        cout << "Введите номер записи, которую вы хотите изменить: ";
-        cin.getline(input, 4);
+        char input[MAX_LEN] = "";
+        cout << "Введите номер записи, которую вы хотите изменить(" << count_students << ", если вы хотите выйти в меню): ";
+        cin.getline(input, MAX_LEN);
         if (cin.fail())
         {
             cin.clear();
             cin.ignore(IGNORE, '\n');
             correct = false;
         }
-        else
-        {
-            correct = (atoi(input) >= 0 && atoi(input) < count_students && strlen(input) != 0);
-            for (int i = 0; i < strlen(input); i++)
-            {
-                if (!is_num(input[i]))
-                {
-                    correct = false;
-                    break;
-                }
-            }
-        }
+        else correct = (atoi(input) >= 0 && atoi(input) <= count_students && is_num(input));
         if (correct) note = atoi(input);
         else error();
     }
-    int command;
+    if (note == count_students)
+    {
+        system("cls");
+        return;
+    }
     correct = false;
     while (!correct)
     {
         correct = true;
-        char input[4] = "";
+        char input[MAX_LEN] = "";
         cout << CHANGE_NAME << ". Изменить имя\n"
              << CHANGE_COURSE << ". Изменить курс\n"
              << CHANGE_ADMISSION_YEAR << ". Изменить год поступления\n"
              << CHANGE_MARKS << ". Изменить оценки\n";
-        cin.getline(input, 4);
+        cout << "Введите команду: ";
+        cin.getline(input, MAX_LEN);
         if (cin.fail())
         {
             cin.clear();
             cin.ignore(IGNORE, '\n');
             correct = false;
         }
-        else
+        else correct = (atoi(input) >= CHANGE_NAME && atoi(input) <= CHANGE_MARKS && is_num(input));
+        if (correct)
         {
-            correct = (atoi(input) == CHANGE_NAME || atoi(input) == CHANGE_COURSE ||
-                       atoi(input) == CHANGE_ADMISSION_YEAR || atoi(input) == CHANGE_MARKS) && strlen(input) != 0;
-            for (int i = 0; i < strlen(input); i++)
+            switch (atoi(input))
             {
-                if (!is_num(input[i]))
-                {
-                    correct = false;
-                    break;
-                }
+            case CHANGE_NAME:
+                input_name(&db[note]);
+                break;
+            case CHANGE_COURSE:
+                input_course(&db[note]);
+                break;
+            case CHANGE_ADMISSION_YEAR:
+                input_admission_year(&db[note]);
+                break;
+            case CHANGE_MARKS:
+                input_marks(&db[note]);
+                break;
+            default:
+                error();
+                break;
             }
         }
-        if (correct) command = atoi(input);
         else error();
-    }
-    switch (command)
-    {
-    case CHANGE_NAME:
-        input_name(&db[note]);
-        break;
-    case CHANGE_COURSE:
-        input_course(&db[note]);
-        break;
-    case CHANGE_ADMISSION_YEAR:
-        input_admission_year(&db[note]);
-        break;
-    case CHANGE_MARKS:
-        input_marks(&db[note]);
-        break;
-    default:
-        error();
-        break;
     }
     system("cls");
     print(db, count_students);
@@ -479,38 +464,33 @@ void sort(Student* db, int& count_students)
 {
     int command;
     bool correct = false;
+    cout << SORT_NAME << ". Имя\n"
+         << SORT_COURSE << ". Курс\n"
+         << SORT_ADMISSION_YEAR << ". Год поступления\n"
+         << SORT_MARKS << ". Средний балл\n"
+         << SORT_MARKS + 1 << ". Выход в меню\n";
     while (!correct)
     {
         correct = true;
-        cout << SORT_NAME << ". Имя\n"
-            << SORT_COURSE << ". Курс\n"
-            << SORT_ADMISSION_YEAR << ". Год поступления\n"
-            << SORT_MARKS << ". Средний балл\n"
-            << "Введите по какому из полей вы хотите отсортировать базу данных: ";
-        char input[2] = "";
-        cin.getline(input, 2);
+        char input[MAX_LEN] = "";
+        cout << "Введите команду: ";
+        cin.getline(input, MAX_LEN);
         if (cin.fail())
         {
             cin.clear();
             cin.ignore(IGNORE, '\n');
             correct = false;
         }
-        else
-        {
-            correct = (atoi(input) == SORT_NAME || atoi(input) == SORT_COURSE ||
-                atoi(input) == SORT_MARKS || atoi(input) == SORT_ADMISSION_YEAR) && (strlen(input) != 0);
-            for (int i = 0; i < strlen(input); i++)
-            {
-                if (!is_num(input[i]))
-                {
-                    correct = false;
-                    break;
-                }
-            }
-        }
+        else correct = (atoi(input) >= SORT_NAME && atoi(input) <= SORT_MARKS + 1 && is_num(input));
 
         if (correct) command = atoi(input);
         else error();
+    }
+
+    if (command == SORT_MARKS + 1)
+    {
+        system("cls");
+        return;
     }
 
     for (int i = 0; i < count_students - 1; i++)
@@ -552,9 +532,9 @@ void input_name(Student* s)
     while (!correct)
     {
         correct = true;
-        char input[MAX_LEN_NAME] = "";
+        char input[MAX_LEN] = "";
         cout << "Введите имя: ";
-        cin.getline(input, MAX_LEN_NAME);
+        cin.getline(input, MAX_LEN);
 
         if (cin.fail())
         {
@@ -586,15 +566,15 @@ void input_course(Student* s)
     {
         correct = true;
         cout << "Введите курс: ";
-        char input[2];
-        cin.getline(input, 2);
+        char input[MAX_LEN];
+        cin.getline(input, MAX_LEN);
         if (cin.fail())
         {
             cin.clear();
             cin.ignore(IGNORE, '\n');
             correct = false;
         }
-        else correct = (input[0] >= '1' && input[0] <= '6');
+        else correct = (atoi(input) >= 1 && atoi(input) <= 6 && is_num(input));
 
         if (correct) strcpy_s(s->course, input);
         else error();
@@ -608,15 +588,18 @@ void input_admission_year(Student* s)
     {
         correct = true;
         cout << "Введите год поступления: ";
-        char input[5];
-        cin.getline(input, 5);
+        char input[MAX_LEN];
+        cin.getline(input, MAX_LEN);
         if (cin.fail())
         {
             cin.clear();
             cin.ignore(IGNORE, '\n');
             correct = false;
         }
-        else correct = (atoi(input) >= 1980 && atoi(input) <= 2021);
+        else
+        {
+            correct = (atoi(input) >= 1980 && atoi(input) <= 2021 && is_num(input));
+        }
 
         if (correct) strcpy_s(s->admission_year, input);
         else error();
@@ -632,15 +615,18 @@ void input_marks(Student* s)
         while (!correct)
         {
             cout << j + 1 << " предмет: ";
-            char input[2] = "";
-            cin.getline(input, 2);
+            char input[MAX_LEN] = "";
+            cin.getline(input, MAX_LEN);
             if (cin.fail())
             {
                 cin.clear();
                 cin.ignore(IGNORE, '\n');
                 correct = false;
             }
-            else correct = (atoi(input) >= 2 && atoi(input) <= 5);
+            else
+            {
+                correct = (atoi(input) >= 2 && atoi(input) <= 5 && is_num(input));
+            }
 
             if (correct) s->marks[j] = atoi(input);
             else error();
@@ -729,7 +715,7 @@ bool is_letter(char c)
     return eng_lower || eng_upper || rus_lower || rus_upper;
 }
 
-bool is_num(char c)
+bool is_digit(char c)
 {
     return ('0' <= c && c <= '9');
 }
@@ -770,4 +756,14 @@ void error()
     set_color(12);
     cout << "Неверный ввод!\n";
     set_color();
+}
+
+bool is_num(const char* str)
+{
+    if (strlen(str) == 0) return false;
+    for (int i = 0; i < strlen(str); i++)
+    {
+        if (!is_digit(str[i])) return false;
+    }
+    return true;
 }
