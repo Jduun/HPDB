@@ -646,17 +646,16 @@ void load_in_tXt_file(Student* db, int& count_students, const char* file_name)
             fout << "\n";
         }
         fout.close();
+        set_color(10);
+        cout << "Запись произошла успешно!\n\n";
+        set_color();
     }
     else
     {
         set_color(12);
         cout << "Произошла ошибка!\n\n";
         set_color();
-        return;
     }
-    set_color(10);
-    cout << "Запись произошла успешно!\n\n";
-    set_color();
 }
 
 void unload_from_txt_file(Student* db, int& count_students, const char* file_name)
@@ -665,9 +664,9 @@ void unload_from_txt_file(Student* db, int& count_students, const char* file_nam
     ifstream fin(file_name, ios::in);
     if (fin.is_open())
     {
-        char input[100] = "";
+        char input[MAX_LEN] = "";
         const char* words[8];
-        while (fin.getline(input, 100))
+        while (fin.getline(input, MAX_LEN))
         {
             int cnt = 0;
             get_words(input, words, cnt);
@@ -678,18 +677,17 @@ void unload_from_txt_file(Student* db, int& count_students, const char* file_nam
             count_students++;
         }
         fin.close();
+        set_color(10);
+        cout << "Выгрузка произошла успешно\n\n";
+        set_color();
+        print(db, count_students);
     }
     else
     {
         set_color(12);
         cout << "Произошла ошибка!\n\n";
         set_color();
-        return;
     }
-    set_color(10);
-    cout << "Выгрузка произошла успешно\n\n";
-    set_color();
-    print(db, count_students);
 }
 
 void load_in_bin_file(Student* db, int& count_students, const char* file_name)
@@ -699,17 +697,16 @@ void load_in_bin_file(Student* db, int& count_students, const char* file_name)
     {
         for (int i = 0; i < count_students; i++) fout.write((char*)&db[i], sizeof(db[i]));
         fout.close();
+        set_color(10);
+        cout << "Зарузка произошла успешно\n\n";
+        set_color();
     }
     else
     {
         set_color(12);
         cout << "Произошла ошибка!\n\n";
         set_color();
-        return;
     }
-    set_color(10);
-    cout << "Зарузка произошла успешно\n\n";
-    set_color();
 }
 
 void unload_from_bin_file(Student* db, int& count_students, const char* file_name)
@@ -723,18 +720,18 @@ void unload_from_bin_file(Student* db, int& count_students, const char* file_nam
             swap(s, db[count_students]);
             count_students++;
         }
+        fin.close();
+        set_color(10);
+        cout << "Выгрузка произошла успешно\n\n";
+        set_color();
+        print(db, count_students);
     }
     else
     {
         set_color(12);
         cout << "Произошла ошибка!\n\n";
         set_color();
-        return;
     }
-    set_color(10);
-    cout << "Выгрузка произошла успешно\n\n";
-    set_color();
-    print(db, count_students);
 }
 
 bool compare(char* s1, char* s2)
