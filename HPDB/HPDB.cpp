@@ -62,8 +62,10 @@ void add(Student*, int&);
 void del(Student*, int&);
 void change(Student*, int&);
 void sort(Student*, int&);
-void load_in_file(Student*, int&, const char*);
-void unload_from_file(Student*, int&, const char*);
+void load_in_tXt_file(Student*, int&, const char*);
+void unload_from_txt_file(Student*, int&, const char*);
+void load_in_bin_file(Student*, int&, const char*);
+void unload_from_bin_file(Student*, int&, const char*);
 
 void input_name(Student*);
 void input_course(Student*);
@@ -130,16 +132,16 @@ int main()
                     print(db, count_students, true);
                     break;
                 case LOAD_IN_TEXT_FILE:
-                    load_in_file(db, count_students, "data_base.txt");
+                    load_in_tXt_file(db, count_students, "data_base.txt");
                     break;
                 case UNLOAD_FROM_TEXT_FILE:
-                    unload_from_file(db, count_students, "data_base.txt");
+                    unload_from_txt_file(db, count_students, "data_base.txt");
                     break;
                 case LOAD_IN_BIN_FILE:
-                    load_in_file(db, count_students, "data_base.bin");
+                    load_in_bin_file(db, count_students, "data_base.bin");
                     break;
                 case UNLOAD_FROM_BIN_FILE:
-                    unload_from_file(db, count_students, "data_base.bin");
+                    unload_from_bin_file(db, count_students, "data_base.bin");
                     break;
                 case EXIT:
                     exit = true;
@@ -596,10 +598,7 @@ void input_admission_year(Student* s)
             cin.ignore(IGNORE, '\n');
             correct = false;
         }
-        else
-        {
-            correct = (atoi(input) >= 1980 && atoi(input) <= 2021 && is_num(input));
-        }
+        else correct = (atoi(input) >= 1980 && atoi(input) <= 2021 && is_num(input));
 
         if (correct) strcpy_s(s->admission_year, input);
         else error();
@@ -634,7 +633,7 @@ void input_marks(Student* s)
     }
 }
 
-void load_in_file(Student* db, int& count_students, const char* file_name)
+void load_in_tXt_file(Student* db, int& count_students, const char* file_name)
 {
     const char* delim = "*";
     ofstream fout(file_name, ios::out);
@@ -660,7 +659,7 @@ void load_in_file(Student* db, int& count_students, const char* file_name)
     set_color();
 }
 
-void unload_from_file(Student* db, int& count_students, const char* file_name)
+void unload_from_txt_file(Student* db, int& count_students, const char* file_name)
 {
     count_students = 0;
     ifstream fin(file_name, ios::in);
@@ -679,6 +678,51 @@ void unload_from_file(Student* db, int& count_students, const char* file_name)
             count_students++;
         }
         fin.close();
+    }
+    else
+    {
+        set_color(12);
+        cout << "Произошла ошибка!\n\n";
+        set_color();
+        return;
+    }
+    set_color(10);
+    cout << "Выгрузка произошла успешно\n\n";
+    set_color();
+    print(db, count_students);
+}
+
+void load_in_bin_file(Student* db, int& count_students, const char* file_name)
+{
+    ofstream fout(file_name, ios::binary);
+    if (fout.is_open())
+    {
+        for (int i = 0; i < count_students; i++) fout.write((char*)&db[i], sizeof(db[i]));
+        fout.close();
+    }
+    else
+    {
+        set_color(12);
+        cout << "Произошла ошибка!\n\n";
+        set_color();
+        return;
+    }
+    set_color(10);
+    cout << "Зарузка произошла успешно\n\n";
+    set_color();
+}
+
+void unload_from_bin_file(Student* db, int& count_students, const char* file_name)
+{
+    ifstream fin(file_name, ios::in);
+    Student s;
+    if (fin.is_open())
+    {
+        while (fin.read((char*)&s, sizeof(s)))
+        {
+            swap(s, db[count_students]);
+            count_students++;
+        }
     }
     else
     {
