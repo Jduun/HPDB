@@ -62,7 +62,7 @@ void add(Student*, int&);
 void del(Student*, int&);
 void change(Student*, int&);
 void sort(Student*, int&);
-void load_in_tXt_file(Student*, int&, const char*);
+void load_in_txt_file(Student*, int&, const char*);
 void unload_from_txt_file(Student*, int&, const char*);
 void load_in_bin_file(Student*, int&, const char*);
 void unload_from_bin_file(Student*, int&, const char*);
@@ -132,7 +132,7 @@ int main()
                     print(db, count_students, true);
                     break;
                 case LOAD_IN_TEXT_FILE:
-                    load_in_tXt_file(db, count_students, "data_base.txt");
+                    load_in_txt_file(db, count_students, "data_base.txt");
                     break;
                 case UNLOAD_FROM_TEXT_FILE:
                     unload_from_txt_file(db, count_students, "data_base.txt");
@@ -633,7 +633,7 @@ void input_marks(Student* s)
     }
 }
 
-void load_in_tXt_file(Student* db, int& count_students, const char* file_name)
+void load_in_txt_file(Student* db, int& count_students, const char* file_name)
 {
     const char* delim = "*";
     ofstream fout(file_name, ios::out);
